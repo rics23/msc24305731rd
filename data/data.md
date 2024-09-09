@@ -3,6 +3,9 @@ https://zenodo.org/records/3713280
 https://github.com/danielafe7-usp/BF-PSR-Framework
 https://raw.githubusercontent.com/nltk/nltk_data/gh-pages/packages/corpora/stopwords.zip
 
+pip install spacy
+python -m spacy download en_core_web_sm
+
 data/nltk
 data/nltk/stopwords
 data/pan12-sexual-predator-identification-test-corpus-2012-05-21

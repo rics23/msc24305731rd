@@ -23,3 +23,7 @@
 2024-09-05 11:24:48,260 - INFO - Trained model saved as e08_hybrid_model.keras
 2024-09-05 12:14:12,755 - INFO - Accuracy: 0.9279481401858672, Precision: 0.00016194113439764647, Recall: 0.12972972972972974, F1 Score: 0.000323478471833786, AUC-ROC: 0.5288748017344596, TP: 24, FN: 161, FP: 148178, TN: 1910418
 2024-09-05 14:28:43,498 - INFO - Saved preprocessed data to pickle files e09_vectorizer.pkl, e09_label_encoder.pkl, e09_resampled_data.pkl, e09_embedding_matrix.npy.
+2024-09-09 18:00:24,567 - INFO - Model e01_logistic_regression_model.pkl and vectorizer e01_tfidf_vectorizer.pkl trained and saved to pickle files.
+2024-09-09 19:37:57,998 - INFO - Accuracy: 1.00, Precision: 0.00, Recall: 0.01, F1 Score: 0.00, AUC-ROC: 0.86, TP: 1, FN: 184, FP: 3851, TN: 2054745
+2024-09-09 20:10:02,936 - INFO - Model e01_logistic_regression_model.pkl and vectorizer e01_tfidf_vectorizer.pkl loaded from pickle files.
+2024-09-09 21:45:24,437 - INFO - Accuracy: 1.00, Precision: 0.00, Recall: 0.01, F1 Score: 0.00, AUC-ROC: 0.86, TP: 1, FN: 184, FP: 3851, TN: 2054745

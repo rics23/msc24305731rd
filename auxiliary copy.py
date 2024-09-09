@@ -1,7 +1,9 @@
-import json
 import numpy as np
 import spacy
 import ssl
+import nltk
+from nltk.corpus import stopwords
+from nltk.stem import SnowballStemmer
 import xml.etree.ElementTree as ET
 import logging
 
@@ -15,6 +17,15 @@ logging.basicConfig(
 )
 
 ssl._create_default_https_context = ssl._create_unverified_context
+
+# Ensure only stopwords are downloaded from nltk
+try:
+    nltk.data.find('corpora/stopwords')
+except LookupError:
+    nltk.download('stopwords')
+
+stop_words = set(stopwords.words('english'))
+stemmer = SnowballStemmer('english')
 
 # Load spaCy's small English model
 nlp = spacy.load("en_core_web_sm")
@@ -71,11 +82,18 @@ def preprocess_text(text):
     if text is None:
         return ""
 
-    # Process the text with spaCy
     doc = nlp(text.lower())
+    tokens = [token.text for token in doc if not token.is_stop and not token.is_punct]
 
-    # Remove stopwords and punctuation, and use lemmatized tokens
-    tokens = [token.lemma_ for token in doc if not token.is_stop and not token.is_punct]
+    return ' '.join(tokens)
+
+
+def preprocess_text_stemmed(text):
+    if text is None:
+        return ""
+
+    doc = nlp(text.lower())
+    tokens = [stemmer.stem(token.text) for token in doc if not token.is_stop and not token.is_punct]
 
     return ' '.join(tokens)
 
@@ -102,56 +120,3 @@ def load_glove_embeddings(glove_path, word_index, embedding_dim=100):
 def extract_behavioral_features(df):
     df['msg_length'] = df['text'].apply(len)
     return df[['msg_length']]
-
-
-
-# Parse PJZ/PJZC JSON formatted datasets
-def parse_pj_dataset(json_file):
-    with open(json_file, 'r') as f:
-        data = json.load(f)
-
-    conversations = []
-
-    for conv in data['conversation']:
-        conversation_id = conv['id']
-        source = conv['source']
-        label = int(conv['label'])  # 1 for groomer, 0 for non-groomer
-        messages = []
-
-        for message in conv['messages']:
-            author = message['author']
-            time = message['time']
-            text = message['text']
-            messages.append({
-                'author': author,
-                'time': time,
-                'text': text
-            })
-
-        conversations.append({
-            'id': conversation_id,
-            'source': source,
-            'label': label,
-            'messages': messages
-        })
-
-    return conversations
-
-
-def label_pj_messages(conversations):
-    labeled_data = []
-
-    for conversation in conversations:
-        label = conversation['label']  # 1 for groomer, 0 for non-groomer
-        for message in conversation['messages']:
-            author = message['author']
-            text = message['text']
-            labeled_data.append({
-                'author': author,
-                'text': text,
-                'label': label
-            })
-
-    return labeled_data
-
-
