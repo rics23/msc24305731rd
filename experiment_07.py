@@ -60,99 +60,129 @@ balancing, model training, and evaluation. Here’s a breakdown of the process:
 """
 
 import gc
+import os
+import pickle
 import pandas as pd
 import tensorflow as tf
 from auxiliary import *
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
 from imblearn.over_sampling import SMOTE
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Embedding, Conv1D, MaxPooling1D, GlobalMaxPooling1D, Dense, SpatialDropout1D
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
-# Parse the training and testing XML files
-pan_training_conversations = parse_conversations('data/pan12-sexual-predator-identification-training-corpus-2012-05-01/pan12-sexual-predator-identification-training-corpus-2012-05-01.xml')
-pan_test_conversations = parse_conversations('data/pan12-sexual-predator-identification-test-corpus-2012-05-21/pan12-sexual-predator-identification-test-corpus-2012-05-17.xml')
+# Define file paths for the pickle files and the model
+vectorizer_path = 'e07_vectorizer.pkl'
+label_encoder_path = 'e07_label_encoder.pkl'
+resampled_data_path = 'e07_resampled_data.pkl'
+model_path = 'e07_cnn_model.keras'
+
+max_features = 10000
+max_len = 100
 
 # Load the list of predators
 with open('data/pan12-sexual-predator-identification-training-corpus-2012-05-01/pan12-sexual-predator-identification-training-corpus-predators-2012-05-01.txt', 'r') as f:
     pan_predator_ids = set(f.read().splitlines())
 
-# Label the training data
-pan_training_data = label_messages(pan_training_conversations, pan_predator_ids)
+# Check if we have pickled data to load
+if os.path.exists(vectorizer_path) and os.path.exists(label_encoder_path) and os.path.exists(resampled_data_path) and os.path.exists(model_path):
+    # Load the pickled data
+    with open(vectorizer_path, 'rb') as f:
+        vectorizer = pickle.load(f)
+    with open(label_encoder_path, 'rb') as f:
+        le = pickle.load(f)
+    with open(resampled_data_path, 'rb') as f:
+        X_train_resampled, y_train_resampled = pickle.load(f)
 
-# Convert to DataFrame
-pan_train_df = pd.DataFrame(pan_training_data)
+    logging.info(f"Loaded preprocessed data from pickle files {vectorizer_path}, {label_encoder_path}, {resampled_data_path}, {model_path}")
+else:
+    # Parse the training and testing XML files
+    pan_training_conversations = parse_conversations('data/pan12-sexual-predator-identification-training-corpus-2012-05-01/pan12-sexual-predator-identification-training-corpus-2012-05-01.xml')
+    pan_test_conversations = parse_conversations('data/pan12-sexual-predator-identification-test-corpus-2012-05-21/pan12-sexual-predator-identification-test-corpus-2012-05-17.xml')
 
-# Fill NaN values in the 'text' column with empty strings
-pan_train_df['text'] = pan_train_df['text'].fillna('')
+    # Label the training data
+    pan_training_data = label_messages(pan_training_conversations, pan_predator_ids)
+    pan_train_df = pd.DataFrame(pan_training_data)
+    pan_train_df['text'] = pan_train_df['text'].fillna('').apply(preprocess_text)
 
-# Preprocess training data
-pan_train_df['text'] = pan_train_df['text'].apply(preprocess_text)
+    # Label the test data
+    pan_test_data = label_messages(pan_test_conversations, pan_predator_ids)
+    pan_test_df = pd.DataFrame(pan_test_data)
+    pan_test_df['text'] = pan_test_df['text'].fillna('').apply(preprocess_text)
 
-# Preprocess test data
-pan_test_data = label_messages(pan_test_conversations, pan_predator_ids)
-pan_test_df = pd.DataFrame(pan_test_data)
-pan_test_df['text'] = pan_test_df['text'].fillna('')
-pan_test_df['text'] = pan_test_df['text'].apply(preprocess_text)
+    # Extract labels
+    y_train = pan_train_df['label']
+    y_test = pan_test_df['label']
 
-# Extract labels
-y_train = pan_train_df['label']
-y_test = pan_test_df['label']
+    # Encode labels
+    le = LabelEncoder()
+    y_train_encoded = le.fit_transform(y_train)
+    y_test_encoded = le.transform(y_test)
 
-# Encode labels
-le = LabelEncoder()
-y_train_encoded = le.fit_transform(y_train)
-y_test_encoded = le.transform(y_test)
+    # Prepare input data for CNN
+    vectorizer = CountVectorizer(max_features=max_features)
+    X_train_bow = vectorizer.fit_transform(pan_train_df['text'])
+    X_test_bow = vectorizer.transform(pan_test_df['text'])
 
-# Prepare input data for CNN
-max_features = 10000
-max_len = 100
+    # Apply SMOTE to balance classes
+    smote = SMOTE(sampling_strategy='minority')
+    X_train_resampled, y_train_resampled = smote.fit_resample(X_train_bow, y_train_encoded)
 
-vectorizer = CountVectorizer(max_features=max_features)
-X_train_bow = vectorizer.fit_transform(pan_train_df['text'])
-X_test_bow = vectorizer.transform(pan_test_df['text'])
+    # Save the processed data using pickle
+    with open(vectorizer_path, 'wb') as f:
+        pickle.dump(vectorizer, f)
+    with open(label_encoder_path, 'wb') as f:
+        pickle.dump(le, f)
+    with open(resampled_data_path, 'wb') as f:
+        pickle.dump((X_train_resampled, y_train_resampled), f)
 
-# Apply SMOTE to balance classes
-smote = SMOTE(sampling_strategy='minority')
-X_train_resampled, y_train_resampled = smote.fit_resample(X_train_bow, y_train_encoded)
+    logging.info(f"Saved preprocessed data to pickle files {vectorizer_path}, {label_encoder_path}, {resampled_data_path}, {model_path}.")
 
 # Pad the sequences for CNN input
 X_train_padded = pad_sequences(X_train_resampled.toarray(), maxlen=max_len, padding='post')
 X_test_padded = pad_sequences(X_test_bow.toarray(), maxlen=max_len, padding='post')
 
 # CNN Model definition
-model = Sequential()
-model.add(Embedding(input_dim=max_features, output_dim=64, input_length=max_len))
-model.add(Conv1D(filters=128, kernel_size=5, activation='relu'))
-model.add(MaxPooling1D(pool_size=5))
-model.add(Conv1D(filters=64, kernel_size=5, activation='relu'))
-model.add(GlobalMaxPooling1D())
-model.add(Dense(64, activation='relu'))
-model.add(Dense(1, activation='sigmoid'))
+if os.path.exists(model_path):
+    # Load the model if it exists
+    model = tf.keras.models.load_model(model_path)
+    logging.info(f"Loaded model {model_path} from file.")
+else:
+    # Define and compile the model
+    model = Sequential()
+    model.add(Embedding(input_dim=max_features, output_dim=64, input_length=max_len))
+    model.add(Conv1D(filters=128, kernel_size=5, activation='relu'))
+    model.add(MaxPooling1D(pool_size=5))
+    model.add(Conv1D(filters=64, kernel_size=5, activation='relu'))
+    model.add(GlobalMaxPooling1D())
+    model.add(Dense(64, activation='relu'))
+    model.add(Dense(1, activation='sigmoid'))
 
-model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
-# Train the CNN model
-model.fit(X_train_padded, y_train_resampled, epochs=5, batch_size=32)
+    # Train the CNN model
+    model.fit(X_train_padded, y_train_resampled, epochs=5, batch_size=32)
+
+    # Save the trained model
+    model.save(model_path)
+    logging.info(f"Saved model {model_path} to file.")
 
 # Evaluate the CNN model on the test data
-y_pred_cnn = (model.predict(X_test_padded) > 0.5).astype(int)
+y_pred_prob = model.predict(X_test_padded)
+y_pred_cnn = (y_pred_prob > 0.5).astype(int)
 
 # Evaluate CNN model
-accuracy_cnn = accuracy_score(y_test_encoded, y_pred_cnn)
-precision_cnn = precision_score(y_test_encoded, y_pred_cnn)
-recall_cnn = recall_score(y_test_encoded, y_pred_cnn)
-f1_cnn = f1_score(y_test_encoded, y_pred_cnn)
-tn_cnn, fp_cnn, fn_cnn, tp_cnn = confusion_matrix(y_test_encoded, y_pred_cnn).ravel()
+accuracy = accuracy_score(y_test_encoded, y_pred_cnn)
+precision = precision_score(y_test_encoded, y_pred_cnn)
+recall = recall_score(y_test_encoded, y_pred_cnn)
+f1 = f1_score(y_test_encoded, y_pred_cnn)
+auc_roc = roc_auc_score(y_test_encoded, y_pred_prob)
+tn, fp, fn, tp = confusion_matrix(y_test_encoded, y_pred_cnn).ravel()
 
-print(f'CNN Model Accuracy: {accuracy_cnn:.2f}')
-print(f'CNN Model Precision: {precision_cnn:.2f}')
-print(f'CNN Model Recall: {recall_cnn:.2f}')
-print(f'CNN Model F1 Score: {f1_cnn:.2f}')
-print(f'CNN TP: {tp_cnn}, FN: {fn_cnn}, FP: {fp_cnn}, TN: {tn_cnn}')
+logging.info(f'Accuracy: {accuracy}, Precision: {precision}, Recall: {recall}, F1 Score: {f1}, AUC-ROC: {auc_roc}, TP: {tp}, FN: {fn}, FP: {fp}, TN: {tn}')
 
 # Clear memory after use
-del X_train_resampled, X_test_bow
+del X_train_resampled, X_test_bow, X_train_padded, X_test_padded
 gc.collect()

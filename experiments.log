@@ -1,0 +1,25 @@
+2024-09-03 13:54:16,815 - INFO - Model e01_logistic_regression_model.pkl and vectorizer e01_tfidf_vectorizer.pkl trained and saved to pickle files.
+2024-09-03 13:55:02,404 - INFO - Accuracy: 1.00, Precision: 0.00, Recall: 0.08, F1 Score: 0.01, AUC-ROC: 0.88, TP: 14, FN: 171, FP: 4713, TN: 2053883
+2024-09-03 13:57:33,037 - INFO - Model e02_logistic_regression_model.pkl and vectorizer e02_tfidf_vectorizer.pkl trained and saved to pickle files.
+2024-09-03 13:58:16,636 - INFO - Accuracy: 0.78, Precision: 0.00, Recall: 0.88, F1 Score: 0.00, AUC-ROC: 0.89, TP: 162, FN: 23, FP: 446052, TN: 1612544
+2024-09-03 13:58:42,513 - INFO - Logistic Regression model e03_logistic_regression_model.pkl and vectorizer e03_bow_vectorizer.pkl loaded from files.
+2024-09-03 13:59:20,447 - INFO - Accuracy: 0.66, Precision: 0.00, Recall: 0.94, F1 Score: 0.00, AUC-ROC: 0.89, TP: 173, FN: 12, FP: 691417, TN: 1367179
+2024-09-03 14:03:25,263 - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2024-09-03 14:03:25,305 - INFO - LSTM model e04_lstm_model.h5, vectorizer e04_bow_vectorizer.pkl, and label encoder e04_label_encoder.pkl loaded from files.
+2024-09-03 14:27:14,073 - INFO - Accuracy: 1.00, Precision: 0.00, Recall: 0.00, F1 Score: 0.00, AUC-ROC: 0.50, TP: 0, FN: 185, FP: 0, TN: 2058596
+2024-09-03 14:54:19,079 - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2024-09-03 14:54:19,109 - INFO - CNN model e05_cnn_model.h5, vectorizer e05_bow_vectorizer.pkl, and label encoder e05_label_encoder.pkl loaded from files.
+2024-09-03 15:01:49,287 - INFO - Accuracy: 1.00, Precision: 0.00, Recall: 0.00, F1 Score: 0.00, AUC-ROC: 0.50, TP: 0, FN: 185, FP: 0, TN: 2058596
+2024-09-03 15:19:47,157 - INFO - Saved preprocessed data to pickle files e07_vectorizer.pkl, e07_label_encoder.pkl, e07_resampled_data.pkl, e07_cnn_model.h5.
+2024-09-03 16:12:26,559 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2024-09-03 16:12:26,865 - INFO - Saved model e07_cnn_model.h5 to file.
+2024-09-03 16:14:38,290 - INFO - Accuracy: 1.00, Precision: 0.00, Recall: 0.00, F1 Score: 0.00, AUC-ROC: 0.50, TP: 0, FN: 185, FP: 3, TN: 2058593
+2024-09-04 09:49:06,891 - INFO - Saved preprocessed data to pickle files e08_vectorizer.pkl, e08_label_encoder.pkl, e08_resampled_data.pkl, e08_embedding_matrix.npy.
+2024-09-04 10:49:03,486 - INFO - Saved preprocessed data to pickle files e08_vectorizer.pkl, e08_label_encoder.pkl, e08_resampled_data.pkl, e08_embedding_matrix.npy.
+2024-09-04 11:02:01,023 - INFO - Saved preprocessed data to pickle files e08_vectorizer.pkl, e08_label_encoder.pkl, e08_resampled_data.pkl, e08_embedding_matrix.npy.
+2024-09-04 11:23:16,785 - INFO - Saved preprocessed data to pickle files e08_vectorizer.pkl, e08_label_encoder.pkl, e08_resampled_data.pkl, e08_embedding_matrix.npy.
+2024-09-05 09:07:29,216 - INFO - Saved preprocessed data to pickle files e08_vectorizer.pkl, e08_label_encoder.pkl, e08_resampled_data.pkl, e08_embedding_matrix.npy.
+2024-09-05 09:29:34,722 - INFO - Saved preprocessed data to pickle files e08_vectorizer.pkl, e08_label_encoder.pkl, e08_resampled_data.pkl, e08_embedding_matrix.npy.
+2024-09-05 11:24:48,260 - INFO - Trained model saved as e08_hybrid_model.keras
+2024-09-05 12:14:12,755 - INFO - Accuracy: 0.9279481401858672, Precision: 0.00016194113439764647, Recall: 0.12972972972972974, F1 Score: 0.000323478471833786, AUC-ROC: 0.5288748017344596, TP: 24, FN: 161, FP: 148178, TN: 1910418
+2024-09-05 14:28:43,498 - INFO - Saved preprocessed data to pickle files e09_vectorizer.pkl, e09_label_encoder.pkl, e09_resampled_data.pkl, e09_embedding_matrix.npy.

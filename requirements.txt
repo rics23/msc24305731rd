@@ -1,7 +1,7 @@
-pandas~=2.2.2
-lxml~=5.3.0
-scikit-learn~=1.5.1
-nltk~=3.9.1
-tensorflow~=2.16.2
-imbalanced-learn
+nltk
+lxml
+numpy
+pandas
 tensorflow
+scikit-learn
+imbalanced-learn
