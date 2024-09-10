@@ -23,7 +23,7 @@ It performs the following steps:
     - Parses chat conversations from XML files for both training and test datasets.
     - Labels messages as 'predator' or 'non-predator' based on the predator IDs.
     - Fills missing text data with empty strings.
-    - Applies text preprocessing to clean and standardize messages (e.g., tokenization, stopword removal).
+    - Applies text preprocessing to clean and standardise messages (e.g., tokenization, stopword removal).
     - Converts text data into TF-IDF features, limiting the number of features to 10000.
 
 4. Model Training (if needed):
