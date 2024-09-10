@@ -42,7 +42,7 @@ It performs the following steps:
     - Predicts and evaluates the model on PJZ and PJZC datasets.
     - Logs the results for these additional datasets.
 """
-import logging
+
 import os
 import pickle
 import pandas as pd
@@ -138,18 +138,18 @@ pjz_df['text'] = pjz_df['text'].fillna('').apply(preprocess_text)
 pjzc_df['text'] = pjzc_df['text'].fillna('').apply(preprocess_text)
 
 # Convert the PJZ/PJZC text to BoW features using the pre-trained vectorizer
-X_pjz_tfidf = vectorizer.transform(pjz_df['text'])
-X_pjzc_tfidf = vectorizer.transform(pjzc_df['text'])
+X_pjz_bow = vectorizer.transform(pjz_df['text'])
+X_pjzc_bow = vectorizer.transform(pjzc_df['text'])
 y_pjz = pjz_df['label']
 y_pjzc = pjzc_df['label']
 
 # Predict on the PJZ/PJZC dataset using the pre-trained PAN2012 model
-y_pjz_pred = model.predict(X_pjz_tfidf)
-y_pjzc_pred = model.predict(X_pjzc_tfidf)
+y_pjz_pred = model.predict(X_pjz_bow)
+y_pjzc_pred = model.predict(X_pjzc_bow)
 
 # Store the predicted probabilities
-y_pjz_pred_prob = model.predict_proba(X_pjz_tfidf)[:, 1]
-y_pjzc_pred_prob = model.predict_proba(X_pjzc_tfidf)[:, 1]
+y_pjz_pred_prob = model.predict_proba(X_pjz_bow)[:, 1]
+y_pjzc_pred_prob = model.predict_proba(X_pjzc_bow)[:, 1]
 
 # Evaluate the model on the PJZ/PJZC dataset
 accuracy_pjz = accuracy_score(y_pjz, y_pjz_pred)
