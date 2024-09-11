@@ -202,4 +202,67 @@ f1 = f1_score(y_test_encoded, y_pred)
 auc_roc = roc_auc_score(y_test_encoded, y_pred)
 tn, fp, fn, tp = confusion_matrix(y_test_encoded, y_pred).ravel()
 
-logging.info(f"Accuracy: {accuracy}, Precision: {precision}, Recall: {recall}, F1 Score: {f1}, AUC-ROC: {auc_roc}, TP: {tp}, FN: {fn}, FP: {fp}, TN: {tn}")
+logging.info(f'Accuracy: {accuracy}, Precision: {precision}, Recall: {recall}, F1 Score: {f1}, AUC-ROC: {auc_roc}, TP: {tp}, FN: {fn}, FP: {fp}, TN: {tn}')
+
+# File path for PJZ/PJZC datasets
+pjz_dataset_path = 'data/pj/PJZ.txt'
+pjzc_dataset_path = 'data/pj/PJZC.txt'
+
+# Parse the PJZ/PJZC datasets
+pjz_conversations = parse_pj_dataset(pjz_dataset_path)
+pjzc_conversations = parse_pj_dataset(pjzc_dataset_path)
+
+# Label the PJZ/PJZC datasets
+pjz_data = label_pj_messages(pjz_conversations)
+pjzc_data = label_pj_messages(pjzc_conversations)
+
+pjz_df = pd.DataFrame(pjz_data)
+pjzc_df = pd.DataFrame(pjzc_data)
+
+pjz_df['text'] = pjz_df['text'].fillna('').apply(preprocess_text)
+pjzc_df['text'] = pjzc_df['text'].fillna('').apply(preprocess_text)
+
+# Transform the PJZ/PJZC datasets
+X_pjz_tfidf = vectorizer.transform(pjz_df['text'])
+X_pjzc_tfidf = vectorizer.transform(pjzc_df['text'])
+
+X_pjz_lda = lda_model.transform(X_pjz_tfidf)
+X_pjzc_lda = lda_model.transform(X_pjzc_tfidf)
+
+X_pjz_behavioral = extract_behavioral_features(pjz_df)
+X_pjzc_behavioral = extract_behavioral_features(pjzc_df)
+
+X_pjz_behavioral_scaled = scaler.transform(X_pjz_behavioral)
+X_pjzc_behavioral_scaled = scaler.transform(X_pjzc_behavioral)
+
+X_pjz_combined = np.hstack((X_pjz_tfidf.toarray(), X_pjz_lda, X_pjz_behavioral_scaled))
+X_pjzc_combined = np.hstack((X_pjzc_tfidf.toarray(), X_pjzc_lda, X_pjzc_behavioral_scaled))
+
+y_pjz_pred = (model.predict(X_pjz_combined) > 0.5).astype(int)
+y_pjzc_pred = (model.predict(X_pjzc_combined) > 0.5).astype(int)
+
+# Predict probabilities (for AUC-ROC calculation)
+y_pjz_pred_prob = model.predict(X_pjz_combined).flatten()
+y_pjzc_pred_prob = model.predict(X_pjzc_combined).flatten()
+
+# Evaluate PJZ dataset
+accuracy_pjz = accuracy_score(pjz_df['label'], y_pjz_pred)
+precision_pjz = precision_score(pjz_df['label'], y_pjz_pred)
+recall_pjz = recall_score(pjz_df['label'], y_pjz_pred)
+f1_pjz = f1_score(pjz_df['label'], y_pjz_pred)
+auc_roc_pjz = roc_auc_score(pjz_df['label'], y_pjz_pred_prob)
+
+# Evaluate PJZC dataset
+accuracy_pjzc = accuracy_score(pjzc_df['label'], y_pjzc_pred)
+precision_pjzc = precision_score(pjzc_df['label'], y_pjzc_pred)
+recall_pjzc = recall_score(pjzc_df['label'], y_pjzc_pred)
+f1_pjzc = f1_score(pjzc_df['label'], y_pjzc_pred)
+auc_roc_pjzc = roc_auc_score(pjzc_df['label'], y_pjzc_pred_prob)
+
+# Confusion matrix for PJZ and PJZC
+tn_pjz, fp_pjz, fn_pjz, tp_pjz = confusion_matrix(pjz_df['label'], y_pjz_pred).ravel()
+tn_pjzc, fp_pjzc, fn_pjzc, tp_pjzc = confusion_matrix(pjzc_df['label'], y_pjzc_pred).ravel()
+
+# Logging the evaluation results
+logging.info(f'PJZ Accuracy: {accuracy_pjz:.2f}, Precision: {precision_pjz:.2f}, Recall: {recall_pjz:.2f}, F1 Score: {f1_pjz:.2f}, AUC-ROC: {auc_roc_pjz:.2f}, TP: {tp_pjz}, FN: {fn_pjz}, FP: {fp_pjz}, TN: {tn_pjz}')
+logging.info(f'PJZC Accuracy: {accuracy_pjzc:.2f}, Precision: {precision_pjzc:.2f}, Recall: {recall_pjzc:.2f}, F1 Score: {f1_pjzc:.2f}, AUC-ROC: {auc_roc_pjzc:.2f}, TP: {tp_pjzc}, FN: {fn_pjzc}, FP: {fp_pjzc}, TN: {tn_pjzc}')
