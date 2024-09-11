@@ -55,11 +55,11 @@ else:
 
     pan_training_data = label_messages(pan_training_conversations, pan_predator_ids)
     pan_train_df = pd.DataFrame(pan_training_data)
-    pan_train_df['text'] = pan_train_df['text'].fillna('').apply(preprocess_text_stemmed)
+    pan_train_df['text'] = pan_train_df['text'].fillna('').apply(preprocess_text)
 
     pan_test_data = label_messages(pan_test_conversations, pan_predator_ids)
     pan_test_df = pd.DataFrame(pan_test_data)
-    pan_test_df['text'] = pan_test_df['text'].fillna('').apply(preprocess_text_stemmed)
+    pan_test_df['text'] = pan_test_df['text'].fillna('').apply(preprocess_text)
 
     # Extract labels
     y_train = pan_train_df['label']
