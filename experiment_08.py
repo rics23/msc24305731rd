@@ -189,8 +189,8 @@ pjzc_data = label_pj_messages(pjzc_conversations)
 pjz_df = pd.DataFrame(pjz_data)
 pjzc_df = pd.DataFrame(pjzc_data)
 
-pjz_df['text'] = pjz_df['text'].fillna('').apply(preprocess_text_stemmed)
-pjzc_df['text'] = pjzc_df['text'].fillna('').apply(preprocess_text_stemmed)
+pjz_df['text'] = pjz_df['text'].fillna('').apply(preprocess_text)
+pjzc_df['text'] = pjzc_df['text'].fillna('').apply(preprocess_text)
 
 # Transform the PJZ/PJZC datasets
 X_pjz_tfidf = vectorizer.transform(pjz_df['text'])
