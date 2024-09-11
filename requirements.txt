@@ -5,3 +5,4 @@ tensorflow
 scikit-learn
 imbalanced-learn
 spacy
+gensim
