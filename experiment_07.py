@@ -79,7 +79,7 @@ labelencoder_path = 'e07_label_encoder.pkl'
 resampled_data_path = 'e07_resampled_data.pkl'
 model_path = 'e07_cnn_model.keras'
 
-max_features = 10000
+max_features = 5000
 max_len = 100
 
 # Load the list of predators
