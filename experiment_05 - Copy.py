@@ -51,10 +51,12 @@ import pandas as pd
 from auxiliary import *
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.preprocessing import LabelEncoder
+from sklearn.decomposition import TruncatedSVD
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Embedding, Conv1D, MaxPooling1D, GlobalMaxPooling1D, Dense, Dropout
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+import logging
 
 # Define file paths for the pickle files and the model
 model_file_path = 'e05_cnn_model.keras'
@@ -64,6 +66,10 @@ labelencoder_file_path = 'e05_label_encoder.pkl'
 # Prepare input data for CNN
 max_features = 10000
 max_len = 100
+svd_features = 300
+
+# Define SVD outside the if-else block
+svd = TruncatedSVD(n_components=svd_features)
 
 # Load the list of predators
 with open('data/pan12-sexual-predator-identification-training-corpus-2012-05-01/pan12-sexual-predator-identification-training-corpus-predators-2012-05-01.txt', 'r') as f:
@@ -94,15 +100,19 @@ else:
     le = LabelEncoder()
     y_train_encoded = le.fit_transform(y_train)
 
+    # Convert text to BoW features
     vectorizer = CountVectorizer(max_features=max_features)
     X_train_bow = vectorizer.fit_transform(pan_train_df['text'])
 
+    # Apply TruncatedSVD to reduce dimensionality
+    X_train_reduced = svd.fit_transform(X_train_bow)
+
     # Pad sequences to ensure uniform input size
-    X_train_padded = pad_sequences(X_train_bow.toarray(), maxlen=max_len)
+    X_train_padded = pad_sequences(X_train_reduced, maxlen=max_len)
 
     # CNN Model
     model = Sequential()
-    model.add(Embedding(input_dim=max_features, output_dim=128, input_length=max_len))
+    model.add(Embedding(input_dim=svd_features, output_dim=128, input_length=max_len))
     model.add(Conv1D(filters=128, kernel_size=5, activation='relu'))
     model.add(MaxPooling1D(pool_size=2))
     model.add(Dropout(0.5))
@@ -122,7 +132,7 @@ else:
         pickle.dump(vectorizer, vectorizer_file)
     with open(labelencoder_file_path, 'wb') as labelencoder_file:
         pickle.dump(le, labelencoder_file)
-
+    # Note: Consider saving the SVD transformer too if needed
     logging.info(f"Model {model_file_path}, vectorizer {vectorizer_file_path}, and label encoder {labelencoder_file_path} trained and saved to files.")
 
 # Parse and preprocess the test data
@@ -135,9 +145,14 @@ pan_test_df['text'] = pan_test_df['text'].fillna('').apply(preprocess_text)
 y_test = pan_test_df['label']
 y_test_encoded = le.transform(y_test)
 
-# Convert test text to BoW features and pad sequences
+# Convert test text to BoW features
 X_test_bow = vectorizer.transform(pan_test_df['text'])
-X_test_padded = pad_sequences(X_test_bow.toarray(), maxlen=max_len)
+
+# Apply the same SVD transformation to the test set
+X_test_reduced = svd.transform(X_test_bow)
+
+# Pad sequences to ensure uniform input size
+X_test_padded = pad_sequences(X_test_reduced, maxlen=max_len)
 
 # Predict on test data
 y_pred_cnn = (model.predict(X_test_padded) > 0.5).astype(int)
@@ -167,7 +182,6 @@ pjzc_conversations = parse_pj_dataset(pjzc_dataset_path)
 pjz_data = label_pj_messages(pjz_conversations)
 pjzc_data = label_pj_messages(pjzc_conversations)
 
-
 # Convert PJZ/PJZC data to DataFrames
 pjz_df = pd.DataFrame(pjz_data)
 pjzc_df = pd.DataFrame(pjzc_data)
@@ -188,9 +202,13 @@ y_pjzc_encoded = le.transform(y_pjzc)
 X_pjz_bow = vectorizer.transform(pjz_df['text'])
 X_pjzc_bow = vectorizer.transform(pjzc_df['text'])
 
+# Apply the same SVD transformation to the PJZ/PJZC datasets
+X_pjz_reduced = svd.transform(X_pjz_bow)
+X_pjzc_reduced = svd.transform(X_pjzc_bow)
+
 # Pad sequences to match input size expected by the LSTM model
-X_pjz_padded = pad_sequences(X_pjz_bow.toarray(), maxlen=max_len)
-X_pjzc_padded = pad_sequences(X_pjzc_bow.toarray(), maxlen=max_len)
+X_pjz_padded = pad_sequences(X_pjz_reduced, maxlen=max_len)
+X_pjzc_padded = pad_sequences(X_pjzc_reduced, maxlen=max_len)
 
 # Predict on the PJZ and PJZC datasets
 y_pjz_pred = (model.predict(X_pjz_padded) > 0.5).astype(int)
@@ -200,7 +218,7 @@ y_pjzc_pred = (model.predict(X_pjzc_padded) > 0.5).astype(int)
 y_pjz_pred_prob = model.predict(X_pjz_padded).flatten()
 y_pjzc_pred_prob = model.predict(X_pjzc_padded).flatten()
 
-# Evaluate the model on the PJZ/PJZC dataset
+# Evaluate the model on the PJZ/PJZC datasets
 accuracy_pjz = accuracy_score(y_pjz_encoded, y_pjz_pred)
 precision_pjz = precision_score(y_pjz_encoded, y_pjz_pred)
 recall_pjz = recall_score(y_pjz_encoded, y_pjz_pred)
