@@ -51,7 +51,6 @@ import pandas as pd
 from auxiliary import *
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.preprocessing import LabelEncoder
-from sklearn.decomposition import TruncatedSVD
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Embedding, LSTM, Dense, Dropout, SpatialDropout1D
 from tensorflow.keras.preprocessing.sequence import pad_sequences
@@ -64,7 +63,6 @@ labelencoder_file_path = 'e04_label_encoder.pkl'
 
 max_features = 10000
 max_len = 100
-svd_features = 500
 
 # Load the list of predators
 with open('data/pan12-sexual-predator-identification-training-corpus-2012-05-01/pan12-sexual-predator-identification-training-corpus-predators-2012-05-01.txt', 'r') as f:
@@ -95,16 +93,11 @@ else:
     le = LabelEncoder()
     y_train_encoded = le.fit_transform(y_train)
 
-    # Convert text data to BoW features
     vectorizer = CountVectorizer(max_features=max_features)
     X_train_bow = vectorizer.fit_transform(pan_train_df['text'])
 
-    # Apply SVD to reduce dimensions
-    svd = TruncatedSVD(n_components=svd_features, random_state=42)
-    X_train_bow_reduced = svd.fit_transform(X_train_bow)
-
     # Pad sequences to ensure uniform input size
-    X_train_padded = pad_sequences(X_train_bow_reduced, maxlen=max_len)
+    X_train_padded = pad_sequences(X_train_bow.toarray(), maxlen=max_len)
 
     # LSTM Model
     model = Sequential()
@@ -137,14 +130,9 @@ pan_test_df['text'] = pan_test_df['text'].fillna('').apply(preprocess_text)
 y_test = pan_test_df['label']
 y_test_encoded = le.transform(y_test)
 
-# Convert test text to BoW features
+# Convert test text to BoW features and pad sequences
 X_test_bow = vectorizer.transform(pan_test_df['text'])
-
-# Apply SVD to reduce dimensions on test set
-X_test_bow_reduced = svd.transform(X_test_bow)
-
-# Pad sequences to match input size expected by the LSTM model
-X_test_padded = pad_sequences(X_test_bow_reduced, maxlen=max_len)
+X_test_padded = pad_sequences(X_test_bow.toarray(), maxlen=max_len)
 
 # Predict on test data
 y_pred_lstm = (model.predict(X_test_padded) > 0.5).astype(int)
@@ -194,13 +182,9 @@ y_pjzc_encoded = le.transform(y_pjzc)
 X_pjz_bow = vectorizer.transform(pjz_df['text'])
 X_pjzc_bow = vectorizer.transform(pjzc_df['text'])
 
-# Apply SVD to reduce dimensions on PJZ and PJZC datasets
-X_pjz_bow_reduced = svd.transform(X_pjz_bow)
-X_pjzc_bow_reduced = svd.transform(X_pjzc_bow)
-
 # Pad sequences to match input size expected by the LSTM model
-X_pjz_padded = pad_sequences(X_pjz_bow_reduced, maxlen=max_len)
-X_pjzc_padded = pad_sequences(X_pjzc_bow_reduced, maxlen=max_len)
+X_pjz_padded = pad_sequences(X_pjz_bow.toarray(), maxlen=max_len)
+X_pjzc_padded = pad_sequences(X_pjzc_bow.toarray(), maxlen=max_len)
 
 # Predict on the PJZ and PJZC datasets
 y_pjz_pred = (model.predict(X_pjz_padded) > 0.5).astype(int)

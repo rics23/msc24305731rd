@@ -1,17 +1,17 @@
 import os
 import pickle
 import pandas as pd
-import numpy as np
 from auxiliary import *
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Embedding, Conv1D, MaxPooling1D, GlobalMaxPooling1D, Dense, LSTM, Bidirectional, SpatialDropout1D, Dropout
 from tensorflow.keras.callbacks import EarlyStopping
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.decomposition import LatentDirichletAllocation
+from sklearn.decomposition import LatentDirichletAllocation, TruncatedSVD
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, confusion_matrix
 from imblearn.over_sampling import SMOTE
 from gensim.models import Word2Vec
+from sklearn.model_selection import GridSearchCV
 
 # Load the list of predators
 with open('data/pan12-sexual-predator-identification-training-corpus-2012-05-01/pan12-sexual-predator-identification-training-corpus-predators-2012-05-01.txt', 'r') as f:
@@ -58,24 +58,28 @@ else:
     pan_test_df = pd.DataFrame(pan_test_data)
     pan_test_df['text'] = pan_test_df['text'].fillna('').apply(preprocess_text)
 
+    # Extract labels
+    y_train = pan_train_df['label']
+    y_test = pan_test_df['label']
+
     # Encode labels
     le = LabelEncoder()
-    y_train_encoded = le.fit_transform(pan_train_df['label'])
-    y_test_encoded = le.transform(pan_test_df['label'])
+    y_train_encoded = le.fit_transform(y_train)
+    y_test_encoded = le.transform(y_test)
 
-    # TF-IDF Vectorization
+    # Prepare input data for hybrid CNN-LSTM
     max_features = 1000
     vectorizer = TfidfVectorizer(max_features=max_features, ngram_range=(1, 2))
     X_train_tfidf = vectorizer.fit_transform(pan_train_df['text'])
     X_test_tfidf = vectorizer.transform(pan_test_df['text'])
 
-    # Dimensionality Reduction with LDA
+    # Apply dimensionality reduction
     embedding_dim = 100
     glove_path = 'data/glove.6B/glove.6B.100d.txt'
     embedding_matrix = load_glove_embeddings(glove_path, vectorizer.vocabulary_, embedding_dim)
     np.save(embedding_matrix_path, embedding_matrix)
 
-    # Apply SMOTE
+    # Apply SMOTE to balance classes
     X_train_resampled, y_train_resampled = smote.fit_resample(X_train_tfidf, y_train_encoded)
 
     # Save the processed data using pickle
@@ -186,53 +190,53 @@ pjzc_conversations = parse_pj_dataset(pjzc_dataset_path)
 pjz_data = label_pj_messages(pjz_conversations)
 pjzc_data = label_pj_messages(pjzc_conversations)
 
+# Convert PJZ/PJZC data to DataFrames
 pjz_df = pd.DataFrame(pjz_data)
 pjzc_df = pd.DataFrame(pjzc_data)
 
+# Fill NaN values in the 'text' column with empty strings and preprocess
 pjz_df['text'] = pjz_df['text'].fillna('').apply(preprocess_text)
 pjzc_df['text'] = pjzc_df['text'].fillna('').apply(preprocess_text)
 
-# Transform the PJZ/PJZC datasets
-X_pjz_tfidf = vectorizer.transform(pjz_df['text'])
-X_pjzc_tfidf = vectorizer.transform(pjzc_df['text'])
 
-X_pjz_lda = lda_model.transform(X_pjz_tfidf)
-X_pjzc_lda = lda_model.transform(X_pjzc_tfidf)
+# Transform the PJZ/PJZC datasets using the same vectorizer
+X_pjz_bow = vectorizer.transform(pjz_df['text'])
+X_pjzc_bow = vectorizer.transform(pjzc_df['text'])
 
-X_pjz_behavioral = extract_behavioral_features(pjz_df)
-X_pjzc_behavioral = extract_behavioral_features(pjzc_df)
+# Pad the PJZ/PJZC sequences to match the input size expected by the CNN model
+X_pjz_padded = pad_sequences(X_pjz_bow.toarray(), maxlen=max_len, padding='post')
+X_pjzc_padded = pad_sequences(X_pjzc_bow.toarray(), maxlen=max_len, padding='post')
 
-X_pjz_behavioral_scaled = scaler.transform(X_pjz_behavioral)
-X_pjzc_behavioral_scaled = scaler.transform(X_pjzc_behavioral)
+# Encode labels for PJZ and PJZC
+y_pjz = pjz_df['label']
+y_pjzc = pjzc_df['label']
+y_pjz_encoded = le.transform(y_pjz)
+y_pjzc_encoded = le.transform(y_pjzc)
 
-X_pjz_combined = np.hstack((X_pjz_tfidf.toarray(), X_pjz_lda, X_pjz_behavioral_scaled))
-X_pjzc_combined = np.hstack((X_pjzc_tfidf.toarray(), X_pjzc_lda, X_pjzc_behavioral_scaled))
-
-y_pjz_pred = (model.predict(X_pjz_combined) > 0.5).astype(int)
-y_pjzc_pred = (model.predict(X_pjzc_combined) > 0.5).astype(int)
+# Predict on the PJZ and PJZC datasets
+y_pjz_pred = (model.predict(X_pjz_padded) > 0.5).astype(int)
+y_pjzc_pred = (model.predict(X_pjzc_padded) > 0.5).astype(int)
 
 # Predict probabilities (for AUC-ROC calculation)
-y_pjz_pred_prob = model.predict(X_pjz_combined).flatten()
-y_pjzc_pred_prob = model.predict(X_pjzc_combined).flatten()
+y_pjz_pred_prob = model.predict(X_pjz_padded).flatten()
+y_pjzc_pred_prob = model.predict(X_pjzc_padded).flatten()
 
-# Evaluate PJZ dataset
-accuracy_pjz = accuracy_score(pjz_df['label'], y_pjz_pred)
-precision_pjz = precision_score(pjz_df['label'], y_pjz_pred)
-recall_pjz = recall_score(pjz_df['label'], y_pjz_pred)
-f1_pjz = f1_score(pjz_df['label'], y_pjz_pred)
-auc_roc_pjz = roc_auc_score(pjz_df['label'], y_pjz_pred_prob)
+# Evaluate the model on the PJZ/PJZC dataset
+accuracy_pjz = accuracy_score(y_pjz_encoded, y_pjz_pred)
+precision_pjz = precision_score(y_pjz_encoded, y_pjz_pred)
+recall_pjz = recall_score(y_pjz_encoded, y_pjz_pred)
+f1_pjz = f1_score(y_pjz_encoded, y_pjz_pred)
+auc_roc_pjz = roc_auc_score(y_pjz_encoded, y_pjz_pred_prob)
 
-# Evaluate PJZC dataset
-accuracy_pjzc = accuracy_score(pjzc_df['label'], y_pjzc_pred)
-precision_pjzc = precision_score(pjzc_df['label'], y_pjzc_pred)
-recall_pjzc = recall_score(pjzc_df['label'], y_pjzc_pred)
-f1_pjzc = f1_score(pjzc_df['label'], y_pjzc_pred)
-auc_roc_pjzc = roc_auc_score(pjzc_df['label'], y_pjzc_pred_prob)
+accuracy_pjzc = accuracy_score(y_pjzc_encoded, y_pjzc_pred)
+precision_pjzc = precision_score(y_pjzc_encoded, y_pjzc_pred)
+recall_pjzc = recall_score(y_pjzc_encoded, y_pjzc_pred)
+f1_pjzc = f1_score(y_pjzc_encoded, y_pjzc_pred)
+auc_roc_pjzc = roc_auc_score(y_pjzc_encoded, y_pjzc_pred_prob)
 
-# Confusion matrix for PJZ and PJZC
-tn_pjz, fp_pjz, fn_pjz, tp_pjz = confusion_matrix(pjz_df['label'], y_pjz_pred).ravel()
-tn_pjzc, fp_pjzc, fn_pjzc, tp_pjzc = confusion_matrix(pjzc_df['label'], y_pjzc_pred).ravel()
+# Calculate confusion matrices for PJZ and PJZC datasets
+tn_pjz, fp_pjz, fn_pjz, tp_pjz = confusion_matrix(y_pjz_encoded, y_pjz_pred).ravel()
+tn_pjzc, fp_pjzc, fn_pjzc, tp_pjzc = confusion_matrix(y_pjzc_encoded, y_pjzc_pred).ravel()
 
-# Logging the evaluation results
 logging.info(f'PJZ Accuracy: {accuracy_pjz:.2f}, Precision: {precision_pjz:.2f}, Recall: {recall_pjz:.2f}, F1 Score: {f1_pjz:.2f}, AUC-ROC: {auc_roc_pjz:.2f}, TP: {tp_pjz}, FN: {fn_pjz}, FP: {fp_pjz}, TN: {tn_pjz}')
 logging.info(f'PJZC Accuracy: {accuracy_pjzc:.2f}, Precision: {precision_pjzc:.2f}, Recall: {recall_pjzc:.2f}, F1 Score: {f1_pjzc:.2f}, AUC-ROC: {auc_roc_pjzc:.2f}, TP: {tp_pjzc}, FN: {fn_pjzc}, FP: {fp_pjzc}, TN: {tn_pjzc}')
