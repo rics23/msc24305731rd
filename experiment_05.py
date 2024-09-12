@@ -67,6 +67,9 @@ max_features = 10000
 max_len = 100
 svd_features = 300
 
+# Define SVD outside the if-else block
+svd = TruncatedSVD(n_components=svd_features)
+
 # Load the list of predators
 with open('data/pan12-sexual-predator-identification-training-corpus-2012-05-01/pan12-sexual-predator-identification-training-corpus-predators-2012-05-01.txt', 'r') as f:
     pan_predator_ids = set(f.read().splitlines())
@@ -101,7 +104,6 @@ else:
     X_train_bow = vectorizer.fit_transform(pan_train_df['text'])
 
     # Apply TruncatedSVD to reduce dimensionality
-    svd = TruncatedSVD(n_components=svd_features)
     X_train_reduced = svd.fit_transform(X_train_bow)
 
     # Pad sequences to ensure uniform input size
@@ -179,7 +181,6 @@ pjzc_conversations = parse_pj_dataset(pjzc_dataset_path)
 pjz_data = label_pj_messages(pjz_conversations)
 pjzc_data = label_pj_messages(pjzc_conversations)
 
-
 # Convert PJZ/PJZC data to DataFrames
 pjz_df = pd.DataFrame(pjz_data)
 pjzc_df = pd.DataFrame(pjzc_data)
@@ -200,9 +201,13 @@ y_pjzc_encoded = le.transform(y_pjzc)
 X_pjz_bow = vectorizer.transform(pjz_df['text'])
 X_pjzc_bow = vectorizer.transform(pjzc_df['text'])
 
+# Apply the same SVD transformation to the PJZ/PJZC datasets
+X_pjz_reduced = svd.transform(X_pjz_bow)
+X_pjzc_reduced = svd.transform(X_pjzc_bow)
+
 # Pad sequences to match input size expected by the LSTM model
-X_pjz_padded = pad_sequences(X_pjz_bow.toarray(), maxlen=max_len)
-X_pjzc_padded = pad_sequences(X_pjzc_bow.toarray(), maxlen=max_len)
+X_pjz_padded = pad_sequences(X_pjz_reduced, maxlen=max_len)
+X_pjzc_padded = pad_sequences(X_pjzc_reduced, maxlen=max_len)
 
 # Predict on the PJZ and PJZC datasets
 y_pjz_pred = (model.predict(X_pjz_padded) > 0.5).astype(int)
@@ -212,7 +217,7 @@ y_pjzc_pred = (model.predict(X_pjzc_padded) > 0.5).astype(int)
 y_pjz_pred_prob = model.predict(X_pjz_padded).flatten()
 y_pjzc_pred_prob = model.predict(X_pjzc_padded).flatten()
 
-# Evaluate the model on the PJZ/PJZC dataset
+# Evaluate the model on the PJZ/PJZC datasets
 accuracy_pjz = accuracy_score(y_pjz_encoded, y_pjz_pred)
 precision_pjz = precision_score(y_pjz_encoded, y_pjz_pred)
 recall_pjz = recall_score(y_pjz_encoded, y_pjz_pred)
