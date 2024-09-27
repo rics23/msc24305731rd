@@ -6,6 +6,7 @@ https://raw.githubusercontent.com/nltk/nltk_data/gh-pages/packages/corpora/stopw
 pip install spacy
 python -m spacy download en_core_web_sm
 
+
 data/nltk
 data/nltk/stopwords
 data/pan12-sexual-predator-identification-test-corpus-2012-05-21

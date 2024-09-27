@@ -1,5 +1,5 @@
 """
-Project:    Advancements in Identifying Online Sexual Predators: A Critical Analysis of Machine Learning Methodologies
+Project:    Advancements in Identifying Online Grooming: A Critical Analysis of Machine Learning Methodologies
             Edge Hill University - CIS4114 - MSc Research & Development Project
 Author:     Mr Ricardo Lopes (24305731@edgehill.ac.uk)
 Created:    2024-08-30

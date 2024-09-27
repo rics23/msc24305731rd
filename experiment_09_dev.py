@@ -1,3 +1,15 @@
+"""
+Project:    Advancements in Identifying Online Grooming: A Critical Analysis of Machine Learning Methodologies
+            Edge Hill University - CIS4114 - MSc Research & Development Project
+Author:     Mr Ricardo Lopes (24305731@edgehill.ac.uk)
+Created:    2024-09-10
+Version:    1.0
+Ownership:  Mr Ricardo Lopes (24305731@edgehill.ac.uk)
+License:    MIT License
+Filename:   experiment_09.py
+
+"""
+
 import os
 import pickle
 import pandas as pd

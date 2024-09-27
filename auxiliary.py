@@ -1,3 +1,41 @@
+"""
+Project:    Advancements in Identifying Online Grooming: A Critical Analysis of Machine Learning Methodologies
+            Edge Hill University - CIS4114 - MSc Research & Development Project
+Author:     Mr Ricardo Lopes (24305731@edgehill.ac.uk)
+Created:    2024-08-30
+Version:    1.0
+Ownership:  Mr Ricardo Lopes (24305731@edgehill.ac.uk)
+License:    MIT License
+Filename:   auxiliary.py
+
+This script provides auxiliary functions for processing, parsing, and analysing chat conversations used in the identification
+of online grooming. It includes the following key components:
+
+1. XML Parsing and Data Labeling:
+    - parse_conversations: Parses XML-formatted chat conversations (from the PAN2012 dataset), extracting messages, authors,
+      and conversation IDs.
+    - label_messages: Labels each message based on the author, using a list of known predator IDs to distinguish between
+      predator and non-predator messages.
+
+2. Text Preprocessing:
+    - preprocess_text: Preprocesses the text data by converting it to lowercase, removing stopwords and punctuation, and
+      lemmatizing the words using spaCy. This prepares the text for vectorization and model training.
+
+3. Embedding Layer Setup:
+    - load_glove_embeddings: Loads pre-trained GloVe embeddings and creates an embedding matrix for the words in the
+      dataset, which will be used for model training.
+
+4. Behavioral Feature Extraction:
+    - extract_behavioral_features: Extracts basic behavioral features, such as message length, to augment the textual data
+      with user behavior-based insights.
+
+5. Parsing and Labeling for PJZ/PJZC Datasets:
+    - parse_pj_dataset: Parses chat conversations in JSON format from additional datasets (PJZ and PJZC), extracting messages,
+      conversation metadata, and labeling the data (1 for groomer, 0 for non-groomer).
+    - label_pj_messages: Labels individual messages based on conversation-level grooming labels.
+
+"""
+
 import json
 import numpy as np
 import spacy

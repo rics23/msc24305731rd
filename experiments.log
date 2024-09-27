@@ -1,3 +1,4 @@
+
 iMac
 2024-09-03 13:54:16,815 - INFO - Model e01_logistic_regression_model.pkl and vectorizer e01_tfidf_vectorizer.pkl trained and saved to pickle files.
 2024-09-03 13:55:02,404 - INFO - Accuracy: 1.00, Precision: 0.00, Recall: 0.08, F1 Score: 0.01, AUC-ROC: 0.88, TP: 14, FN: 171, FP: 4713, TN: 2053883

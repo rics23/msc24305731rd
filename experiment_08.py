@@ -1,3 +1,61 @@
+"""
+Project:    Advancements in Identifying Online Grooming: A Critical Analysis of Machine Learning Methodologies
+            Edge Hill University - CIS4114 - MSc Research & Development Project
+Author:     Mr Ricardo Lopes (24305731@edgehill.ac.uk)
+Created:    2024-09-01
+Version:    1.0
+Ownership:  Mr Ricardo Lopes (24305731@edgehill.ac.uk)
+License:    MIT License
+Filename:   experiment_08.py
+
+This script processes and analyzes chat conversations from the PAN2012 Sexual Predator Identification dataset using a
+hybrid CNN-LSTM deep learning approach. The main steps include data parsing, preprocessing, feature extraction, class
+balancing, model training, and evaluation. Here’s a breakdown of the process:
+
+1. Data Parsing and Labeling
+    Parsing: The script parses XML files containing chat conversations from the PAN2012 dataset for both training and testing.
+    Labeling: Messages are labeled as 'predator' or 'non-predator' based on a predefined list of predator IDs. This is done by matching the IDs from the chat messages with the known predator IDs provided in the dataset.
+
+2. Data Preprocessing
+    Handling Missing Data: Any missing text data in the chat messages is filled with empty strings to ensure consistency during processing.
+    Text Preprocessing: The text data undergoes cleaning and standardization, which includes steps such as tokenization and stopword removal. This step is crucial for ensuring that the input text is in a suitable format for vectorization and subsequent model training.
+
+3. Feature Extraction
+    - TF-IDF Vectorization: The preprocessed text data is converted into numerical features using the TF-IDF (Term Frequency-Inverse Document Frequency) model, which captures the importance of words in each document.
+    - LDA Topic Modeling: After vectorization, Latent Dirichlet Allocation (LDA) is applied for dimensionality reduction, generating topic-based features from the text.
+    - Behavioral Features: In addition to text-based features, the script extracts behavioral features (user-based metadata) for analysis, which are scaled using `StandardScaler`.
+
+4. Data Balancing
+    SMOTE: Synthetic Minority Over-sampling Technique (SMOTE) is applied to balance the classes. Specifically, synthetic samples are generated for the minority class ('predator' messages), addressing the class imbalance issue in the training data.
+
+5. Model Training
+    - Hybrid CNN-LSTM Model: The script defines and trains a hybrid Convolutional Neural Network (CNN) and Long Short-Term Memory (LSTM) network. CNNs are useful for capturing local patterns in sequences, while LSTMs capture long-term dependencies in text data.
+        - Embedding Layer: Converts input words into dense vectors using pre-trained GloVe embeddings.
+        - Convolutional Layer: Extracts local features from sequences using 1D convolutions.
+        - MaxPooling Layer: Reduces the spatial dimensions, selecting the most important features.
+        - Bidirectional LSTM Layer: Captures sequential dependencies from both directions (past and future) in the text.
+        - Global MaxPooling: Aggregates the most prominent features from the entire sequence.
+        - Dense Layers: Fully connected layers output the probability of a message being from a predator.
+    - Training Epochs: The model is trained over multiple epochs with early stopping to prevent overfitting.
+
+6. Model Evaluation
+    Prediction: After training, the model is used to predict labels on the test data.
+    Evaluation Metrics: The model's performance is evaluated using several metrics:
+    Accuracy: The overall correctness of the model.
+    Precision, Recall, F1 Score: These metrics are particularly important in imbalanced classification problems like this one. However, in this case, they all returned 0.00 due to the model's failure to identify any positive cases (predators).
+    Confusion Matrix: Provides a breakdown of true positives, false negatives, false positives, and true negatives.
+
+
+7. Memory Management
+    - Preprocessing Artifacts: After training and evaluation, preprocessed data, models, and embeddings are saved to disk using pickle and NumPy for reuse.
+    - Garbage Collection: Unnecessary variables are deleted, and garbage collection is invoked to free up memory.
+
+8. Additional Dataset Processing (PJZ and PJZC Datasets)
+    - The script also processes two additional datasets (PJZ and PJZC), following the same preprocessing, feature extraction, and evaluation steps as for the PAN2012 dataset.
+    - These datasets are used to further test the model's ability to generalize to unseen data.
+
+"""
+
 import os
 import pickle
 import pandas as pd
