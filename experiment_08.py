@@ -122,38 +122,25 @@ X_train_combined = np.hstack((X_train_resampled.toarray(), X_train_lda, X_train_
 X_test_combined = np.hstack((X_test_tfidf.toarray(), X_test_lda, X_test_behavioral))
 
 # Define and compile the hybrid CNN-LSTM model
-print("Defining and compiling the hybrid CNN-LSTM model")
 input_shape = X_train_combined.shape[1]
 
 model = Sequential()
-print("Embedding")
 model.add(Embedding(input_dim=embedding_matrix.shape[0], output_dim=embedding_dim, input_length=input_shape, weights=[embedding_matrix], trainable=False))
-print("SpatialDropout1D")
 model.add(SpatialDropout1D(0.2))
-print("Conv1D")
 model.add(Conv1D(filters=128, kernel_size=5, activation='relu'))
-print("MaxPooling1D")
 model.add(MaxPooling1D(pool_size=5))
-print("Bidirectional")
 model.add(Bidirectional(LSTM(64, return_sequences=True)))
-print("GlobalMaxPooling1D")
 model.add(GlobalMaxPooling1D())
-print("Dense relu")
 model.add(Dense(64, activation='relu'))
-print("Dropout")
 model.add(Dropout(0.5))
-print("Dense sigmoid")
 model.add(Dense(1, activation='sigmoid'))
 
-print("Compiling the model")
 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
 # Early stopping to avoid overfitting
-print("Setting up early stopping")
 early_stopping = EarlyStopping(monitor='val_loss', patience=3)
 
 # Train the hybrid model
-print("Training the hybrid model")
 model.fit(X_train_combined, y_train_resampled, epochs=1, batch_size=32, validation_split=0.2, callbacks=[early_stopping])
 
 # Save the trained model

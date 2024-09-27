@@ -42,18 +42,7 @@ balancing, model training, and evaluation. Here’s a breakdown of the process:
     Accuracy: The overall correctness of the model.
     Precision, Recall, F1 Score: These metrics are particularly important in imbalanced classification problems like this one. However, in this case, they all returned 0.00 due to the model's failure to identify any positive cases (predators).
     Confusion Matrix: Provides a breakdown of true positives, false negatives, false positives, and true negatives.
-    Results:
-        Epoch 1/5 - 53915/53915 ━━━━━━━━━━━━━━━━━━━━ 501s 9ms/step - accuracy: 0.5011 - loss: 0.6919
-        Epoch 2/5 - 53915/53915 ━━━━━━━━━━━━━━━━━━━━ 561s 10ms/step - accuracy: 0.5014 - loss: 0.6920
-        Epoch 3/5 - 53915/53915 ━━━━━━━━━━━━━━━━━━━━ 649s 12ms/step - accuracy: 0.5011 - loss: 0.6918
-        Epoch 4/5 - 53915/53915 ━━━━━━━━━━━━━━━━━━━━ 651s 12ms/step - accuracy: 0.5014 - loss: 0.6926
-        Epoch 5/5 - 53915/53915 ━━━━━━━━━━━━━━━━━━━━ 654s 12ms/step - accuracy: 0.5000 - loss: 0.6930
-                    64337/64337 ━━━━━━━━━━━━━━━━━━━━ 106s 2ms/step
-        CNN Model Accuracy: 1.00
-        CNN Model Precision: 0.00
-        CNN Model Recall: 0.00
-        CNN Model F1 Score: 0.00
-        CNN TP: 0, FN: 185, FP: 2, TN: 2058594
+
 
 7. Memory Management
     Garbage Collection: After training and evaluation, unnecessary variables are deleted, and garbage collection is invoked to free up memory.

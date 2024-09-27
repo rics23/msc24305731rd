@@ -98,11 +98,10 @@ def load_glove_embeddings(glove_path, word_index, embedding_dim=100):
     return embedding_matrix
 
 
-# Behavioral Feature Extraction
+# Behavioural Feature Extraction
 def extract_behavioral_features(df):
     df['msg_length'] = df['text'].apply(len)
     return df[['msg_length']]
-
 
 
 # Parse PJZ/PJZC JSON formatted datasets
